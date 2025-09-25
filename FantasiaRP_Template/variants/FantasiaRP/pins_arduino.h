@@ -3,7 +3,7 @@
 #define PICO_RP2350A 0 // RP2350B
 
 // LEDs
-#define PIN_LED (25u)
+#define PIN_LED (33u)
 
 // Serial
 #define PIN_SERIAL1_TX (0u)
@@ -24,14 +24,14 @@
 #define PIN_SPI1_SS (13u)
 
 // Wire
-#define PIN_WIRE0_SDA (4u)
-#define PIN_WIRE0_SCL (5u)
+#define PIN_WIRE0_SDA (2u)
+#define PIN_WIRE0_SCL (3u)
 
 #define PIN_WIRE1_SDA (26u)
 #define PIN_WIRE1_SCL (27u)
 
 #define SERIAL_HOWMANY (3u)
-#define SPI_HOWMANY (2u)
+#define SPI_HOWMANY (0u)
 #define WIRE_HOWMANY (2u)
 
 // common

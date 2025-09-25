@@ -8,16 +8,36 @@
 // end of generated code
 
 void setup() {
+
+  setupAudio();
+
   setupCVs();
-  // setupDisplay();
+  setupDisplay();
+  setupEncoder();
+  setupButtons();
+  setupGates();
+
 
   Serial.println("=== FantasiA ===");
 }
 
 
 void loop() {
-  readCVs();
-  printCVs();
-}
 
-// TODO: get correct pins for segment display encoder and buttons
+  readCVs();
+  //printCVs();
+
+  readEncoder();
+  printEncoder();
+
+  readButtons();
+  // printButtons();
+
+  readGateIn();
+  // printGateIn();
+
+  mixer1.gain(0, (float)cv1 / 4095.0f); // Input gain
+  mixer1.gain(1, (float)cv2 / 4095.0f); // Sine wave gain
+  mixer2.gain(0, (float)cv3 / 4095.0f); // Dry signal
+  mixer2.gain(1, (float)cv4 / 4095.0f); // Wet signal
+}
