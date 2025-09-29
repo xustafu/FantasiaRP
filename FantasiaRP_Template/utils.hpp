@@ -2,14 +2,45 @@
 #pragma once
 #include "variants/FantasiaRP/pins_arduino.h"
 #include <Arduino.h>
-// #define AIC3204
-// #include <pico-audio.h>
-#include "audiotest.hpp"
+// #include "audiotest.hpp" //included at the end of file
 #include <Adafruit_NeoPixel.h>
 // #include "button.h"
 #include <SegmentDisplay.h>
 #include <PicoEncoder.h>
 #include <Bounce2.h>
+
+// ============= LEDs ==============
+
+struct color
+{
+  uint8_t red = 255;
+  uint8_t green = 0;
+  uint8_t blue = 0;
+};
+#define LED_BRIGHTNESS 50
+color ledsColors[NUM_LEDS];
+// CRGB leds[NUM_LEDS];
+Adafruit_NeoPixel leds(NUM_LEDS, PIN_LED, NEO_GRB + NEO_KHZ800);
+
+void setupLEDs(){
+  leds.begin();
+  leds.show();
+  leds.setBrightness(LED_BRIGHTNESS);
+}
+
+void updateLEDs(){
+  // leds.clear();
+  for (uint8_t i = 0; i < 1 + NUM_LEDS; i++)
+  {
+    leds.setPixelColor(i, ledsColors[i].red, ledsColors[i].green, ledsColors[i].blue);
+  }
+  leds.show();
+  // delay(2);
+}
+
+// ============= LEDs ==============
+
+
 
 // ============== CVs ==============
 
@@ -270,3 +301,7 @@ void printButtons(){
   }
 }
 // ============ BUTTONS ============
+
+
+// ============= AUDIO =============
+#include "audiotest.hpp" //at the end to trick the compiler and use all hardware

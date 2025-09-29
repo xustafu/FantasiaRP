@@ -1,13 +1,18 @@
 #pragma once
-// #define PICO_RP2350
+#define PICO_RP2350 1
 #define PICO_RP2350A 0 // RP2350B
+
+#ifndef ARDUINO_ARCH_RP2040
+#define ARDUINO_ARCH_RP2040 //needed for NeoPixel on pin >= 32
+#endif
 
 // LEDs
 #define PIN_LED (33u)
+#define NUM_LEDS 4
 
 // Serial
-#define PIN_SERIAL1_TX (0u)
-#define PIN_SERIAL1_RX (1u)
+#define PIN_SERIAL1_TX (10u)
+#define PIN_SERIAL1_RX (11u)
 
 #define PIN_SERIAL2_TX (8u)
 #define PIN_SERIAL2_RX (9u)
@@ -31,8 +36,8 @@
 #define PIN_WIRE1_SCL (27u)
 
 #define SERIAL_HOWMANY (3u)
-#define SPI_HOWMANY (0u)
-#define WIRE_HOWMANY (2u)
+#define SPI_HOWMANY (1u)
+#define WIRE_HOWMANY (1u)
 
 // common
 

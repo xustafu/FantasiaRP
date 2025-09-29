@@ -9,6 +9,8 @@
 
 void setup() {
 
+  // delay(5000);
+
   setupAudio();
 
   setupCVs();
@@ -17,6 +19,7 @@ void setup() {
   setupButtons();
   setupGates();
 
+  setupLEDs();
 
   Serial.println("=== FantasiA ===");
 }
@@ -25,10 +28,10 @@ void setup() {
 void loop() {
 
   readCVs();
-  //printCVs();
+  // printCVs();
 
   readEncoder();
-  printEncoder();
+  //printEncoder();
 
   readButtons();
   // printButtons();
@@ -36,8 +39,11 @@ void loop() {
   readGateIn();
   // printGateIn();
 
-  mixer1.gain(0, (float)cv1 / 4095.0f); // Input gain
-  mixer1.gain(1, (float)cv2 / 4095.0f); // Sine wave gain
-  mixer2.gain(0, (float)cv3 / 4095.0f); // Dry signal
-  mixer2.gain(1, (float)cv4 / 4095.0f); // Wet signal
+  updateAudio();
+
+  ledsColors[3].blue = cv2 / 16; //red to magenta as the sine gets louder
+  ledsColors[2].blue = cv2 / 16;
+  ledsColors[1].green = cv4 / 16; //red to yellow as the wet signal increases
+  ledsColors[0].green = cv4 / 16;
+  updateLEDs();
 }
