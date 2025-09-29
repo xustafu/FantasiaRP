@@ -4,8 +4,9 @@ Fantasia para RP2350B
 
 ## Installation Steps:  
 
-- Download this repo
-- Install VSCode
-- Click on File/Open Folder... and select either the template or one of the example folders
-- Accept to install the extension recommendations or manually install Platform.io extension
-- Build and Upload your code
+  * Install free [VSCode](https://code.visualstudio.com/download).  
+  * Add the free [PlatformIO extension](https://marketplace.visualstudio.com/items?itemName=platformio.platformio-ide). 
+  * Download this repo
+  * Open it up with VSCode
+  * Click the platformio compile + upload button
+  * That's it!
