@@ -101,13 +101,13 @@ void printCVs() {
 // part number: FYS-2811buhr-21
 // (https://cetest02.cn-bj.ufileos.com/100001_2003185297/1%20FYS-2811A-BX-XX.pdf)
 
-// SegmentDisplay segmentDisplay(23, 22, 24, 19, 18, 21, 20, 25);
-// E   D   C   DP  B   A   G   F
+
+//                            E   D   C   DP  B   A   G   F
 SegmentDisplay segmentDisplay(18, 19, 24, 25, 22, 23, 21, 20);
 
 void setupDisplay() {
-  // segmentDisplay.testDisplay();
   segmentDisplay.displayHex(15, false);
+  segmentDisplay.testDisplay();
 }
 // ============ DISPLAY ============
 
