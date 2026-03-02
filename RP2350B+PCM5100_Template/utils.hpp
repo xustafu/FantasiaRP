@@ -5,19 +5,48 @@
 #include <Adafruit_NeoPixel.h>
 #include <pico-audio.h>
 #include <SegmentDisplay.h>
-// #include "button.h"
+#include <Bounce2.h>
 //#include <PicoEncoder.h>
 
-
-
 // ============== Neopixel ==========
-
-// Which pin on rp2350 is connected to the NeoPixels?
-#define PINLED 39
-
 // How many NeoPixels are attached to the line?
 #define NUMPIXELS 2
-Adafruit_NeoPixel pixels(NUMPIXELS, PINLED, NEO_GRB + NEO_KHZ800);
+
+struct color
+{
+  uint8_t red = 255;
+  uint8_t green = 0;
+  uint8_t blue = 0;
+};
+
+color ledsColors[NUMPIXELS];
+#define LED_BRIGHTNESS 50
+// Which pin on rp2350 is connected to the NeoPixels?
+#ifndef PIN_LED
+#define PIN_LED 39
+#endif
+//define our pixels
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN_LED, NEO_GRB + NEO_KHZ800);
+
+void setupNeopixel()
+{
+  pixels.begin(); // INITIALIZE NeoPixel object
+  pixels.show();
+  pixels.setBrightness(LED_BRIGHTNESS);
+}
+
+void updateNeopixel()
+{
+  for (uint8_t i = 0; i < 1 + NUMPIXELS; i++)
+  {
+    pixels.setPixelColor(i, ledsColors[i].red, ledsColors[i].green, ledsColors[i].blue);
+  }
+  pixels.show();
+  // delay(2);
+}
+// ============= LEDs ==============
+
+
 
 // ============== CVs ==============
 
@@ -35,35 +64,13 @@ int cv3 = 0;
 int cv4 = 0;
 int cv5 = 0;
 
-
-// ============ DISPLAY ============
-// Display LEDs Declaration (16, 7, 6, 13, 12, 15, 14, 5)
-SegmentDisplay segmentDisplay(12, 13, 6, 5, 7, 16, 14, 15);
-
-void setupDisplay() {
-  // Set Display LEDs ports as Outputs
-  pinMode(16, OUTPUT);
-  pinMode(7, OUTPUT);
-  pinMode(3, OUTPUT);
-  pinMode(13, OUTPUT);
-  pinMode(11, OUTPUT);
-  pinMode(15, OUTPUT);
-  pinMode(14, OUTPUT);
-  pinMode(5, OUTPUT);
-
-  segmentDisplay.displayHex(16, false);
-}
-
-void setupNeopixel() {
-
-  pixels.begin(); // INITIALIZE NeoPixel object
-}
-
-void setupCVs() {
+void setupCVs()
+{
   analogReadResolution(12);
 }
 
-void readCVs(uint8_t crop = 0) {
+void readCVs(uint8_t crop = 0)
+{
   cv1 = analogRead(CV1);
   cv2 = analogRead(CV2);
   cv3 = analogRead(CV3);
@@ -78,6 +85,51 @@ void readCVs(uint8_t crop = 0) {
     cv5 = max(crop, cv5);
   }
 }
+// ============== CVs ==============
+
+// ============ DISPLAY ============
+// based on this part number: FYS-2811buhr-21
+// (https://cetest02.cn-bj.ufileos.com/100001_2003185297/1%20FYS-2811A-BX-XX.pdf)
+
+// Display LEDs Declaration   E   D   C  DP B   A   G   F
+SegmentDisplay segmentDisplay(12, 13, 6, 5, 7, 16, 14, 15);
+
+void setupDisplay() {
+
+  segmentDisplay.displayHex(15, false);
+}
+// ============ DISPLAY ============
+
+
+
+// ============ BUTTONS ============
+// Buttons 1-2 = 13, 16 ?? 
+Bounce button1 = Bounce(13, 5); // 5 ms debounce time
+Bounce button2 = Bounce(16, 5);
+
+void setupButtons(uint8_t pullup = 1)
+{
+  if (pullup == 1)
+  {
+    pinMode(13, INPUT_PULLUP);
+    pinMode(16, INPUT_PULLUP);
+  }
+  else
+  {
+    pinMode(13, INPUT_PULLDOWN);
+    pinMode(16, INPUT_PULLDOWN);
+  }
+}
+
+void readButtons()
+{
+  button1.update();
+  button2.update();
+}
+// ============ BUTTONS ============
+
+
+// ========== PRINT-TESTS ==========
 void printNeoPixel() {
     pixels.clear(); // Set all pixel colors to 'off'
   for (int i = 0; i < NUMPIXELS; i++) {
@@ -91,6 +143,7 @@ void printNeoPixel() {
     Serial.print("\n");
   }
 }
+
 void printCVs() {
     Serial.print("CV 1: ");
     Serial.print(cv1);
@@ -108,10 +161,30 @@ void printCVs() {
     Serial.print(cv5);
     Serial.print("\n");
 }
+
 void printSevenSegment() {
-segmentDisplay.testDisplay();
+  segmentDisplay.testDisplay();
 }
-// ============== CVs ==============
+
+
+void printButtons(){
+  if (button1.fallingEdge())
+  {
+    Serial.println("Button 1 Pressed");
+  } else if (button1.risingEdge())
+  {
+    Serial.println("Button 1 Released");
+  }
+  if (button2.fallingEdge())
+  {
+    Serial.println("Button 2 Pressed");
+  }
+  else if (button2.risingEdge())
+  {
+    Serial.println("Button 2 Released");
+  }
+}
+// ========== PRINT-TESTS ==========
 
 
 
