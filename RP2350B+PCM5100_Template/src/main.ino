@@ -19,10 +19,11 @@ AudioConnection          patchCord2(waveform2, 0, output, 1);
 
 void setup() {
   setupCVs();
-  setupNeopixel(); 
+  setupNeopixel();
   setupDisplay();
-  AudioMemory(200); //copy paste del ejemplo
-//InitiaLlize waveform
+  setupButtons();
+  AudioMemory(200); // copy paste del ejemplo
+  // InitiaLlize waveform
   waveform1.begin(WAVEFORM_SQUARE);
   waveform1.amplitude(1.0); 
   waveform1.frequency(440);
@@ -41,9 +42,8 @@ void loop() {
   readCVs();
   printNeoPixel();
   printSevenSegment();
-  //printCVs();
-  
-
+  // printCVs();
+  printButtons();
 }
 
 // TODO: get correct pins for segment display encoder and buttons

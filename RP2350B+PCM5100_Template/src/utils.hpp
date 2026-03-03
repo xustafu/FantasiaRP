@@ -1,6 +1,6 @@
 // some quality of life utils
 #pragma once
-#include "variants/FantasiaRP/pins_arduino.h"
+#include "../variants/FantasiaRP/pins_arduino.h"
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 #include <pico-audio.h>
@@ -103,9 +103,9 @@ void setupDisplay() {
 
 
 // ============ BUTTONS ============
-// Buttons 1-2 = 13, 16 ?? 
-Bounce button1 = Bounce(13, 5); // 5 ms debounce time
-Bounce button2 = Bounce(16, 5);
+// Buttons 1-2 = 19, 38 ?? 
+Bounce button1 = Bounce(19, 5); // 5 ms debounce time
+Bounce button2 = Bounce(38, 5);
 
 void setupButtons(uint8_t pullup = 1)
 {
@@ -189,7 +189,7 @@ void printButtons(){
 
 
 // ============ ENCODER ============
-// Encoder enc(0, 1);
+// Encoder enc(18, 44);
 // long oldEncPos = -999;
 //PicoEncoder encoder;
 
