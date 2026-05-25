@@ -22,9 +22,9 @@ struct color
 color ledsColors[NUMPIXELS];
 #define LED_BRIGHTNESS 50
 // Which pin on rp2350 is connected to the NeoPixels?
-#ifndef PIN_LED
-#define PIN_LED 39
-#endif
+// #ifndef PIN_LED
+// #define PIN_LED 39
+// #endif
 //define our pixels
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN_LED, NEO_GRB + NEO_KHZ800);
 
@@ -52,17 +52,17 @@ void updateNeopixel()
 
 // you can call readCVs() to get the values for all cvs
 // then use them thanks to the cv1 ... cv5 variables (they are ints from 0 to 4095 if you called setupCVs, otherwise 0-1024)
-static const uint8_t CV1 = A3;
-static const uint8_t CV2 = A7;
-static const uint8_t CV3 = A4;
-static const uint8_t CV4 = A5;
-static const uint8_t CV5 = A6;
+static const uint8_t CV1 = A5;
+static const uint8_t CV2 = A6;
+static const uint8_t CV3 = A7;
+// static const uint8_t CV4 = A5;
+// static const uint8_t CV5 = A6;
 
 int cv1 = 0;
 int cv2 = 0;
 int cv3 = 0;
-int cv4 = 0;
-int cv5 = 0;
+// int cv4 = 0;
+// int cv5 = 0;
 
 void setupCVs()
 {
@@ -74,15 +74,15 @@ void readCVs(uint8_t crop = 0)
   cv1 = analogRead(CV1);
   cv2 = analogRead(CV2);
   cv3 = analogRead(CV3);
-  cv4 = analogRead(CV4);
-  cv5 = analogRead(CV5);
+  // cv4 = analogRead(CV4);
+  // cv5 = analogRead(CV5);
   if (crop > 0)
   {
     cv1 = max(crop, cv1);
     cv2 = max(crop, cv2);
     cv3 = max(crop, cv3);
-    cv4 = max(crop, cv4);
-    cv5 = max(crop, cv5);
+    // cv4 = max(crop, cv4);
+    // cv5 = max(crop, cv5);
   }
 }
 // ============== CVs ==============
@@ -154,12 +154,12 @@ void printCVs() {
     Serial.print("CV 3: ");
     Serial.print(cv3);
     Serial.print("\n");
-    Serial.print("CV 4: ");
-    Serial.print(cv4);
-    Serial.print("\n");
-    Serial.print("CV 5: ");
-    Serial.print(cv5);
-    Serial.print("\n");
+    // Serial.print("CV 4: ");
+    // Serial.print(cv4);
+    // Serial.print("\n");
+    // Serial.print("CV 5: ");
+    // Serial.print(cv5);
+    // Serial.print("\n");
 }
 
 void printSevenSegment() {

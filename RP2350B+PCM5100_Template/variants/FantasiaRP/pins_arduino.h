@@ -1,9 +1,9 @@
 #pragma once
-// #define PICO_RP2350
+#define PICO_RP2350B
 #define PICO_RP2350A 0 // RP2350B
 
 // LEDs
-#define PIN_LED (25u)
+#define PIN_LED (43u)
 
 // Serial
 #define PIN_SERIAL1_TX (0u)
@@ -226,7 +226,7 @@ static const uint8_t A3 = __PIN_A3;
 static const uint8_t A3 = (29u);
 #endif
 
-#elif defined(PICO_RP2350) && !PICO_RP2350A // RP2350B
+#elif defined(PICO_RP2350B) && !PICO_RP2350A // RP2350B
 
 #ifdef __PIN_D30
 static const uint8_t D30 = __PIN_D30;

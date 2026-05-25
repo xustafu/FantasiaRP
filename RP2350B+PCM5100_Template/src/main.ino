@@ -34,7 +34,7 @@ void setup() {
   waveform2.offset(0.1);
   //Start Codec Output
   output.begin(0,1,2);
-  Serial.println("=== FantasiA ===");
+  Serial.println("=== PonyEnvelope ===");
 }
 
 
@@ -42,7 +42,7 @@ void loop() {
   readCVs();
   printNeoPixel();
   printSevenSegment();
-  // printCVs();
+  printCVs();
   printButtons();
 }
 
