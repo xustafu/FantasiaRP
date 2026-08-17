@@ -1,0 +1,5 @@
+.pio
+.build
+.DS_Store
+.vscode
+ignored

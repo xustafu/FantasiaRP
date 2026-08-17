@@ -1,0 +1,38 @@
+{
+    "build": {
+        "arduino": {
+            "earlephilhower": {
+                "boot2_source": "none.S",
+                "usb_vid": "0x2E8A",
+                "usb_pid": "0x1000",
+                "psram_cs": "4",
+                "psram_size": "8388608"
+            }
+        },
+        "core": "earlephilhower",
+        "cpu": "cortex-m33",
+        "mcu": "rp2350",
+        "variant": "PonyPlay",
+        "variants_dir": "variants"
+    },
+    "debug": {
+        "jlink_device": "RP2350_M33_0",
+        "openocd_target": "rp2350.cfg",
+        "svd_path": "rp2350.svd"
+    },
+    "frameworks": ["arduino", "picosdk"],
+    "name": "PonyPlay",
+    "upload": {
+        "maximum_ram_size": 524288,
+        "maximum_size": 16777216,
+        "psram_length": "8388608",
+        "require_upload_port": true,
+        "native_usb": true,
+        "use_1200bps_touch": true,
+        "wait_for_upload_port": false,
+        "protocol": "picoprobe",
+        "protocols": ["blackmagic", "cmsis-dap", "jlink", "raspberrypi-swd", "picotool", "picoprobe"]
+    },
+    "url": "",
+    "vendor": "Befaco"
+}

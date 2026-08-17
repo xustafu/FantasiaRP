@@ -1,0 +1,51 @@
+name: Build Firmware
+
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["v*"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build:
+    name: PlatformIO build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Register PonyPlay board
+        run: |
+          mkdir -p boards
+          [ -f PonyPlay.json ] && cp PonyPlay.json boards/PonyPlay.json || true
+
+      - name: Pre-install platform & toolchain
+        run: pio pkg install --environment PonyPlay
+
+      - name: Install PonyPlay variant
+        run: |
+          VARIANT_DIR="$(find ~/.platformio/packages -path '*/framework-arduinopico/variants' -type d | head -1)/PonyPlay"
+          mkdir -p "$VARIANT_DIR"
+          if [ -f variants/PonyPlay/pins_arduino.h ]; then
+            cp variants/PonyPlay/pins_arduino.h "$VARIANT_DIR/"
+          elif [ -f pins_arduino.h ]; then
+            cp pins_arduino.h "$VARIANT_DIR/"
+          else
+            echo "::error::pins_arduino.h not found – check repo layout" && exit 1
+          fi
+          echo "Variant installed at $VARIANT_DIR"
+
+      - name: Build firmware
+        run: pio run --environment PonyPlay
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: PonyPlay-firmware-${{ github.sha }}
+          path: .pio/build/PonyPlay/*.uf2
+          if-no-files-found: warn

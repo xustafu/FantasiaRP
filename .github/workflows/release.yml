@@ -1,0 +1,70 @@
+name: Release Firmware
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & publish release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Register PonyPlay board
+        run: |
+          mkdir -p boards
+          [ -f PonyPlay.json ] && cp PonyPlay.json boards/PonyPlay.json || true
+
+      - name: Pre-install platform & toolchain
+        run: pio pkg install --environment PonyPlay
+
+      - name: Install PonyPlay variant
+        run: |
+          VARIANT_DIR="$(find ~/.platformio/packages -path '*/framework-arduinopico/variants' -type d | head -1)/PonyPlay"
+          mkdir -p "$VARIANT_DIR"
+          if [ -f variants/PonyPlay/pins_arduino.h ]; then
+            cp variants/PonyPlay/pins_arduino.h "$VARIANT_DIR/"
+          elif [ -f pins_arduino.h ]; then
+            cp pins_arduino.h "$VARIANT_DIR/"
+          else
+            echo "::error::pins_arduino.h not found" && exit 1
+          fi
+
+      - name: Build firmware
+        run: pio run --environment PonyPlay
+
+      - name: Rename firmware files
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          BUILD_DIR=".pio/build/PonyPlay"
+          mkdir -p release-assets
+
+          UF2=$(find "$BUILD_DIR" -name "*.uf2" | head -1)
+          [ -n "$UF2" ] && cp "$UF2" "release-assets/PonyPlay-firmware-${TAG}.uf2"
+
+          ELF=$(find "$BUILD_DIR" -name "firmware.elf" | head -1)
+          [ -n "$ELF" ] && cp "$ELF" "release-assets/PonyPlay-firmware-${TAG}.elf"
+
+          BIN=$(find "$BUILD_DIR" -name "firmware.bin" | head -1)
+          [ -n "$BIN" ] && cp "$BIN" "release-assets/PonyPlay-firmware-${TAG}.bin"
+
+          ls -lh release-assets/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "PonyPlay Firmware ${{ github.ref_name }}"
+          generate_release_notes: true
+          files: release-assets/*
+          fail_on_unmatched_files: false
