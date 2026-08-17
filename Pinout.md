@@ -21,5 +21,5 @@ BETA 2
 |SDMISO  | 36  |
 |SDMOSI  | 35  |
 |SDSCK  | 34  |
-|PSRAM_CS  | 4  |
+
 
