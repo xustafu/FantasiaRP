@@ -39,11 +39,7 @@ void loop() {
   readGateIn();
   // printGateIn();
 
-  updateAudio();
+  updateAudio(); // also sets the LED colors as a VU meter
 
-  ledsColors[3].blue = cv2 / 16; //red to magenta as the sine gets louder
-  ledsColors[2].blue = cv2 / 16;
-  ledsColors[1].green = cv4 / 16; //red to yellow as the wet signal increases
-  ledsColors[0].green = cv4 / 16;
   updateLEDs();
 }
