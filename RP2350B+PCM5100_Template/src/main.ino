@@ -18,32 +18,29 @@ AudioConnection          patchCord2(waveform2, 0, output, 1);
 // end of generated code
 
 void setup() {
-  setupCVs();
-  setupNeopixel();
-  setupDisplay();
-  setupButtons();
+  Serial.begin(115200);
+  setupControls();
   AudioMemory(200); // copy paste del ejemplo
   // InitiaLlize waveform
-  waveform1.begin(WAVEFORM_SQUARE);
-  waveform1.amplitude(1.0); 
+  // Sine 0..2V at the jacks: 1V centre, 1V peak (inversion handled by jackVoltsToDac)
+  waveform1.begin(WAVEFORM_SINE);
+  waveform1.amplitude(fabsf(jackVoltsToDac(1.0f)));
   waveform1.frequency(440);
-  waveform1.offset(1.0);
-  waveform2.begin(WAVEFORM_SQUARE);
-  waveform2.amplitude(1.0);
+  waveform1.offset(jackVoltsToDac(1.0f));
+  waveform2.begin(WAVEFORM_SINE);
+  waveform2.amplitude(fabsf(jackVoltsToDac(1.0f)));
   waveform2.frequency(440);
-  waveform2.offset(0.1);
+  waveform2.offset(jackVoltsToDac(1.0f));
   //Start Codec Output
-  output.begin(0,1,2);
-  Serial.println("=== PonyEnvelope ===");
+  output.begin(PIN_I2S_BCK, PIN_I2S_LRCK, PIN_I2S_DATA);
+  Serial.println("=== FantasiA ===");
 }
 
 
 void loop() {
-  readCVs();
-  printNeoPixel();
-  printSevenSegment();
-  printCVs();
-  printButtons();
+  readControls();
+  ledsColors[0].green = trigButtonPressed() ? 255 : 0;
+  updateNeopixel();
+  printControls();
+  delay(100);
 }
-
-// TODO: get correct pins for segment display encoder and buttons

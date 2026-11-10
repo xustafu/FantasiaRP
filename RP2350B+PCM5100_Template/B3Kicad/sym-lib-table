@@ -1,0 +1,4 @@
+(sym_lib_table
+	(version 7)
+	(lib (name "Pony_env_B3-eagle-import") (type "KiCad") (uri "${KIPRJMOD}/Pony_env_B3-eagle-import.kicad_sym") (options "") (descr ""))
+)

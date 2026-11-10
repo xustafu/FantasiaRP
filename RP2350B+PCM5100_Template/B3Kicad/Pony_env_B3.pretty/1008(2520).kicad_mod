@@ -1,0 +1,179 @@
+(footprint "1008(2520)"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "Shielded 1008 Inductor  Physical Characteristics:\n\n• 1008 Package (2520 metric)\n• Landing Pads: 2.5 X 2.0mm")
+	(property "Reference" "REF**"
+		(at -1.478459 0.575635 90)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "d97fc2a7-9d3f-4d82-a291-378ec90fb416")
+		(effects
+			(font
+				(size 0.784758 0.784758)
+				(thickness 0.028042)
+			)
+			(justify right top)
+		)
+	)
+	(property "Value" "3.3μH"
+		(at -0.87 1.524 180)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "deda6ea2-d6ba-4ea5-b668-2b79ef87b7cb")
+		(effects
+			(font
+				(size 0.352958 0.352958)
+				(thickness 0.028042)
+			)
+			(justify left bottom)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "9e7116d2-d8af-4e18-b5cb-3430b7f4a0eb")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "0145a58f-06a3-4ba7-9162-cfab61bde8b8")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start 1.08 0.97)
+		(end 1.08 -0.97)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "3b2ab152-3868-4da9-85cf-610dc34f17e9")
+	)
+	(fp_line
+		(start 1.08 -0.97)
+		(end -1.08 -0.97)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "a7ebaeda-c95a-407c-9113-ce196d5b1d33")
+	)
+	(fp_line
+		(start -1.08 0.97)
+		(end 1.08 0.97)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "10577762-2d01-42c8-a9cf-0e4487c41bb4")
+	)
+	(fp_line
+		(start -1.08 -0.97)
+		(end -1.08 0.97)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "a133a592-247a-4788-b074-df1040356e96")
+	)
+	(fp_line
+		(start 1 0.9)
+		(end 1 -0.9)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "ef49975f-0934-4928-b334-355a3256ac64")
+	)
+	(fp_line
+		(start 1 -0.9)
+		(end -1 -0.9)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "cd30cb7a-6931-41b9-be06-53e2fe3ff72a")
+	)
+	(fp_line
+		(start -1 0.9)
+		(end 1 0.9)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "cbc698bb-8a45-42a3-bf52-3a3a7279c70f")
+	)
+	(fp_line
+		(start -1 -0.9)
+		(end -1 0.9)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "28b4db8c-e18c-4c61-aa23-66ffb5c24241")
+	)
+	(fp_poly
+		(pts
+			(xy 0.48 0.91) (xy 1.01 0.91) (xy 1.01 -0.92) (xy 0.48 -0.92)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill yes)
+		(layer "F.Fab")
+		(uuid "670550d4-d54c-4861-bc23-a015b2dc7e30")
+	)
+	(fp_poly
+		(pts
+			(xy -1.01 0.91) (xy -0.48 0.91) (xy -0.48 -0.91) (xy -1.01 -0.91)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill yes)
+		(layer "F.Fab")
+		(uuid "40251b89-4fb7-40a6-a033-a8be6c92c68a")
+	)
+	(pad "1" smd rect
+		(at -0.9 0 270)
+		(size 2 0.8)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(solder_mask_margin 0.0508)
+		(solder_paste_margin 0)
+		(thermal_bridge_angle 0)
+		(uuid "44abb5cd-0abb-48b5-962e-bff0b6701414")
+	)
+	(pad "2" smd rect
+		(at 0.9 0 270)
+		(size 2 0.8)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(solder_mask_margin 0.0508)
+		(solder_paste_margin 0)
+		(thermal_bridge_angle 0)
+		(uuid "5520e503-491f-4f8a-863e-82d3fe9b1b56")
+	)
+	(embedded_fonts no)
+)

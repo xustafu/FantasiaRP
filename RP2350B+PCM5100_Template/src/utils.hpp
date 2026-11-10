@@ -1,17 +1,60 @@
-// some quality of life utils
+// Hardware definition for Pony Env Beta 3 (RP2350B + PCM5100)
+// Pin map traced from B3Kicad/Pony_env_B3.kicad_sch (RP2350B = X3)
 #pragma once
 #include "../variants/FantasiaRP/pins_arduino.h"
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 #include <pico-audio.h>
-#include <SegmentDisplay.h>
 #include <Bounce2.h>
-//#include <PicoEncoder.h>
 
-// ============== Neopixel ==========
-// How many NeoPixels are attached to the line?
-#define NUMPIXELS 2
+// =========================================================================
+//  PIN MAP
+// =========================================================================
 
+// ---- I2S -> PCM5100 (IC8) ----
+// PCM5100 left  (OUTL) -> IC14B -> ENV output jack (also drives the VCA CV)
+// PCM5100 right (OUTR) -> IC14A -> ENV_ATTE output jack
+#define PIN_I2S_BCK   0   // X3.77 -> IC8 BCK
+#define PIN_I2S_LRCK  1   // X3.78 -> IC8 LRCK
+#define PIN_I2S_DATA  2   // X3.79 -> IC8 DIN
+#define DAC_CH_ENV       0  // left
+#define DAC_CH_ENV_ATTE  1  // right
+
+// Output scaling (both channels): PCM5100 full scale = 2.1 Vrms = 2.97 Vpk,
+// then inverting stage gain = -39k / (2.2k + 10k) = -3.2  ->  -9.49 V per 1.0 FS.
+// Trim this constant after measuring a real unit.
+#define OUT_VOLTS_PER_FS (-9.49f)
+
+// Convert a desired voltage at the output jack to a DAC sample value (-1..1)
+inline float jackVoltsToDac(float volts) { return volts / OUT_VOLTS_PER_FS; }
+
+// ---- Analog (slider/pot + CV jack summed by an inverting MCP6002 stage) ----
+// Vadc = -(Vpot + 0.33 * Vcv), pot spans 0..-10V, clipped to 0..3.3V:
+// moving the slider/pot towards -10V raises the reading, positive CV lowers it.
+#define PIN_ATTACK   A7   // GPIO47 / ADC7 : ATTACK slider (U$8) + ATTACK CV jack
+#define PIN_DECAY    A6   // GPIO46 / ADC6 : DECAY slider (U$13) + DECAY CV jack
+#define PIN_LEVEL    A5   // GPIO45 / ADC5 : SPEED pot (SPEED0) + LVL CV jack
+
+// ---- Gates ----
+#define PIN_TRIG_IN   12  // GPIO12 : TRIGG jack via Q7, INVERTED (LOW = trigger high), ext. 10k pull-up R65
+#define PIN_EOC_OUT   18  // GPIO18 : EOC jack via Q1, INVERTED (GPIO LOW = jack high ~+11V)
+
+// ---- Trigger button with NeoPixel (TRIG_BUT0) ----
+#define PIN_TRIG_BUTTON 44 // GPIO44 : shorts to GND when pressed -> INPUT_PULLUP
+#define PIN_NEOPIXEL    43 // GPIO43 : WS2812 DIN via R22 (560R)
+#define NUMPIXELS       1  // only the LED inside the button (DOUT not connected)
+
+// ---- 4-position slide switches (common = 3.3V, active HIGH, one-hot) ----
+static const uint8_t MODE_PINS[4]  = {42, 41, 40, 33}; // MODE1..MODE4   (MODE0)
+static const uint8_t SHAPE_PINS[4] = {35, 34, 31, 37}; // SHAPE1..SHAPE4 (ENV_SHAPE0)
+static const uint8_t RANGE_PINS[4] = {19, 39, 38, 36}; // RANGE1..RANGE4 (ENV_RANGE0)
+
+// Not available on this board: SWD is unconnected, no 7-segment display,
+// no encoder. Audio IN L/R go straight to the analog VCA (AS3360), not to the MCU.
+
+// =========================================================================
+//  NEOPIXEL
+// =========================================================================
 struct color
 {
   uint8_t red = 255;
@@ -21,181 +64,146 @@ struct color
 
 color ledsColors[NUMPIXELS];
 #define LED_BRIGHTNESS 50
-// Which pin on rp2350 is connected to the NeoPixels?
-// #ifndef PIN_LED
-// #define PIN_LED 39
-// #endif
-//define our pixels
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN_LED, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
 
 void setupNeopixel()
 {
-  pixels.begin(); // INITIALIZE NeoPixel object
-  pixels.show();
+  pixels.begin();
   pixels.setBrightness(LED_BRIGHTNESS);
+  pixels.show();
 }
 
 void updateNeopixel()
 {
-  for (uint8_t i = 0; i < 1 + NUMPIXELS; i++)
+  for (uint8_t i = 0; i < NUMPIXELS; i++)
   {
     pixels.setPixelColor(i, ledsColors[i].red, ledsColors[i].green, ledsColors[i].blue);
   }
   pixels.show();
-  // delay(2);
 }
-// ============= LEDs ==============
 
-
-
-// ============== CVs ==============
-
-// you can call readCVs() to get the values for all cvs
-// then use them thanks to the cv1 ... cv5 variables (they are ints from 0 to 4095 if you called setupCVs, otherwise 0-1024)
-static const uint8_t CV1 = A5;
-static const uint8_t CV2 = A6;
-static const uint8_t CV3 = A7;
-// static const uint8_t CV4 = A5;
-// static const uint8_t CV5 = A6;
-
-int cv1 = 0;
-int cv2 = 0;
-int cv3 = 0;
-// int cv4 = 0;
-// int cv5 = 0;
+// =========================================================================
+//  ANALOG CONTROLS (0..4095)
+// =========================================================================
+int attackCV = 0;
+int decayCV = 0;
+int levelCV = 0;
 
 void setupCVs()
 {
   analogReadResolution(12);
 }
 
-void readCVs(uint8_t crop = 0)
+void readCVs()
 {
-  cv1 = analogRead(CV1);
-  cv2 = analogRead(CV2);
-  cv3 = analogRead(CV3);
-  // cv4 = analogRead(CV4);
-  // cv5 = analogRead(CV5);
-  if (crop > 0)
-  {
-    cv1 = max(crop, cv1);
-    cv2 = max(crop, cv2);
-    cv3 = max(crop, cv3);
-    // cv4 = max(crop, cv4);
-    // cv5 = max(crop, cv5);
-  }
+  attackCV = analogRead(PIN_ATTACK);
+  decayCV  = analogRead(PIN_DECAY);
+  levelCV  = analogRead(PIN_LEVEL);
 }
-// ============== CVs ==============
 
-// ============ DISPLAY ============
-// based on this part number: FYS-2811buhr-21
-// (https://cetest02.cn-bj.ufileos.com/100001_2003185297/1%20FYS-2811A-BX-XX.pdf)
+// =========================================================================
+//  SWITCHES (position 0..3, -1 while between positions)
+// =========================================================================
+int8_t modeSwitch = -1;
+int8_t shapeSwitch = -1;
+int8_t rangeSwitch = -1;
 
-// Display LEDs Declaration   E   D   C  DP B   A   G   F
-SegmentDisplay segmentDisplay(12, 13, 6, 5, 7, 16, 14, 15);
-
-void setupDisplay() {
-
-  segmentDisplay.displayHex(15, false);
-}
-// ============ DISPLAY ============
-
-
-
-// ============ BUTTONS ============
-// Buttons 1-2 = 19, 38 ?? 
-Bounce button1 = Bounce(19, 5); // 5 ms debounce time
-Bounce button2 = Bounce(38, 5);
-
-void setupButtons(uint8_t pullup = 1)
+void setupSwitches()
 {
-  if (pullup == 1)
+  for (uint8_t i = 0; i < 4; i++)
   {
-    pinMode(13, INPUT_PULLUP);
-    pinMode(16, INPUT_PULLUP);
-  }
-  else
-  {
-    pinMode(13, INPUT_PULLDOWN);
-    pinMode(16, INPUT_PULLDOWN);
+    pinMode(MODE_PINS[i], INPUT_PULLDOWN);
+    pinMode(SHAPE_PINS[i], INPUT_PULLDOWN);
+    pinMode(RANGE_PINS[i], INPUT_PULLDOWN);
   }
 }
 
-void readButtons()
+int8_t readSwitch(const uint8_t pins[4])
 {
-  button1.update();
-  button2.update();
+  for (uint8_t i = 0; i < 4; i++)
+  {
+    if (digitalRead(pins[i]) == HIGH)
+      return i;
+  }
+  return -1;
 }
-// ============ BUTTONS ============
 
+void readSwitches()
+{
+  modeSwitch  = readSwitch(MODE_PINS);
+  shapeSwitch = readSwitch(SHAPE_PINS);
+  rangeSwitch = readSwitch(RANGE_PINS);
+}
 
-// ========== PRINT-TESTS ==========
-void printNeoPixel() {
-    pixels.clear(); // Set all pixel colors to 'off'
-  for (int i = 0; i < NUMPIXELS; i++) {
+// =========================================================================
+//  GATES & BUTTON
+// =========================================================================
+Bounce trigButton = Bounce();
+Bounce trigIn = Bounce();
+
+void setupGates()
+{
+  trigButton.attach(PIN_TRIG_BUTTON, INPUT_PULLUP);
+  trigButton.interval(5);
+  trigIn.attach(PIN_TRIG_IN, INPUT); // external pull-up R65
+  trigIn.interval(1);
+  pinMode(PIN_EOC_OUT, OUTPUT);
+  digitalWrite(PIN_EOC_OUT, HIGH);   // HIGH = EOC jack low
+}
+
+void readGates()
+{
+  trigButton.update();
+  trigIn.update();
+}
+
+// logical helpers (inversions handled here)
+bool trigButtonPressed() { return trigButton.read() == LOW; }
+bool trigButtonPushed()  { return trigButton.fell(); }
+bool trigInHigh()        { return trigIn.read() == LOW; }
+bool trigInRising()      { return trigIn.fell(); }
+void setEOC(bool high)   { digitalWrite(PIN_EOC_OUT, high ? LOW : HIGH); }
+
+// =========================================================================
+//  SETUP / READ ALL
+// =========================================================================
+void setupControls()
+{
+  setupCVs();
+  setupSwitches();
+  setupGates();
+  setupNeopixel();
+}
+
+void readControls()
+{
+  readCVs();
+  readSwitches();
+  readGates();
+}
+
+// =========================================================================
+//  PRINT-TESTS
+// =========================================================================
+// switch position as printable char: '1'..'4', '-' while between positions
+char switchChar(int8_t pos) { return pos < 0 ? '-' : char('1' + pos); }
+
+void printControls()
+{
+  Serial.printf("ATTACK %4d  DECAY %4d  SPEED/LVL %4d | BOTON %s | MODE %c  SHAPE %c  RANGE %c\n",
+                attackCV, decayCV, levelCV,
+                trigButtonPressed() ? "ON " : "OFF",
+                switchChar(modeSwitch), switchChar(shapeSwitch), switchChar(rangeSwitch));
+}
+
+void printNeoPixel()
+{
+  pixels.clear();
+  for (int i = 0; i < NUMPIXELS; i++)
+  {
     pixels.setPixelColor(i, pixels.Color(0, 150, 0));
-    pixels.show();   // Send the updated pixel colors to the hardware.
-    delay(500); // Pause for a moment to see the change
-    Serial.print("Pixel "); //Print LED colors in Serial Monitor
-    Serial.print(i);
-    Serial.print(": ");
-    Serial.print(pixels.getPixelColor(i));
-    Serial.print("\n");
+    pixels.show();
+    delay(500);
+    Serial.printf("Pixel %d: %lu\n", i, (unsigned long)pixels.getPixelColor(i));
   }
 }
-
-void printCVs() {
-    Serial.print("CV 1: ");
-    Serial.print(cv1);
-    Serial.print("\n");
-    Serial.print("CV 2: ");
-    Serial.print(cv2);
-    Serial.print("\n");
-    Serial.print("CV 3: ");
-    Serial.print(cv3);
-    Serial.print("\n");
-    // Serial.print("CV 4: ");
-    // Serial.print(cv4);
-    // Serial.print("\n");
-    // Serial.print("CV 5: ");
-    // Serial.print(cv5);
-    // Serial.print("\n");
-}
-
-void printSevenSegment() {
-  segmentDisplay.testDisplay();
-}
-
-
-void printButtons(){
-  if (button1.fallingEdge())
-  {
-    Serial.println("Button 1 Pressed");
-  } else if (button1.risingEdge())
-  {
-    Serial.println("Button 1 Released");
-  }
-  if (button2.fallingEdge())
-  {
-    Serial.println("Button 2 Pressed");
-  }
-  else if (button2.risingEdge())
-  {
-    Serial.println("Button 2 Released");
-  }
-}
-// ========== PRINT-TESTS ==========
-
-
-
-// ============ ENCODER ============
-// Encoder enc(18, 44);
-// long oldEncPos = -999;
-//PicoEncoder encoder;
-
-//void setupEncoder() {
-//  encoder.begin(4);
-//}
-
-
-// ============ ENCODER ============
