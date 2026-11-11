@@ -1,92 +1,66 @@
-// Fantasia RP template
+// Pony ENV firmware (B3 hardware)
 //
-// check in utils.hpp for some built-in goodies
+// Implementation plan and bench tests: docs/FIRMWARE_PLAN.md
+// Hardware map: utils.hpp
+//
+// Step 1: envelope engine skeleton, linear AD (100 ms / 500 ms), 0..10 V on
+//         ENV and ENV_ATTE.
+// Step 2: TRIGG jack (interrupt) and button fire the envelope; EOC 4 ms pulse.
 #include "utils.hpp"
+#include "pony_env.hpp"
 
-// Minimal DC source (pico-audio's AudioSynthWaveformDc has no update() implementation)
-class AudioDcOut : public AudioStream
-{
-public:
-  AudioDcOut() : AudioStream(0, NULL), level(0) {}
-  // n = DAC sample value -1..1
-  void amplitude(float n)
-  {
-    n = constrain(n, -1.0f, 1.0f);
-    level = (int16_t)(n * 32767.0f);
-  }
-  virtual void update(void)
-  {
-    audio_block_t *block = allocate();
-    if (!block) return;
-    int16_t v = level;
-    for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) block->data[i] = v;
-    transmit(block);
-    release(block);
-  }
-private:
-  volatile int16_t level;
-};
-
-// Place the code generated in Audio web here:
 // ============== Audio ==============
-
-
-AudioDcOut               dcEnv;      // left  -> ENV jack + VCA CV
-AudioDcOut               dcEnvAtte;  // right -> ENV_ATTE jack
+PonyEnv                  env;
 AudioOutputI2S           output;
-AudioConnection          patchCord1(dcEnv, 0, output, DAC_CH_ENV);
-AudioConnection          patchCord2(dcEnvAtte, 0, output, DAC_CH_ENV_ATTE);
-// GUItool: end automatically generated code
+AudioConnection          patchCord1(env, 0, output, DAC_CH_ENV);
+AudioConnection          patchCord2(env, 1, output, DAC_CH_ENV_ATTE);
+// ===================================
 
-
-// end of generated code
-
-// Level test: ENV (and ENV_ATTE) output a fixed DC level set by the LEVEL pot.
-// After the B3 rework (HW_MODS_B3.md) the envelope runs 0..10V at the jack and
-// the VCA CV scaling (R5 47k / R8 7.5k) is done in hardware.
 #define ENV_MAX_VOLTS 10.0f
-// LVL ADC span after R1/R28 -> 110k: pot 0..-10V -> 0..3.0V -> ~0..3723.
-// Estimated: re-measure min/max on the serial monitor and update.
+// LVL ADC span after R1/R28 -> 110k (used again from step 6)
 #define LVL_ADC_MIN 43
 #define LVL_ADC_MAX 3700
 
-float levelVolts = 0.0f;
-
-void setDcVolts(float volts)
+// TRIGG jack is inverted (Q7): jack rising edge = GPIO falling edge
+volatile uint32_t trigCount = 0;
+void onTrigIn()
 {
-  float dac = jackVoltsToDac(volts); // inversion handled here
-  dcEnv.amplitude(dac);
-  dcEnvAtte.amplitude(dac);
+  env.trigger();
+  trigCount++;
 }
 
 void setup() {
   Serial.begin(115200);
   setupControls();
-  AudioMemory(200); // copy paste del ejemplo
-  setDcVolts(0.0f);
-  //Start Codec Output
+  AudioMemory(200);
+  env.setAttack(0.100f);
+  env.setDecay(0.500f);
+  env.setMaxVolts(ENV_MAX_VOLTS);
+  attachInterrupt(digitalPinToInterrupt(PIN_TRIG_IN), onTrigIn, FALLING);
   output.begin(PIN_I2S_BCK, PIN_I2S_LRCK, PIN_I2S_DATA);
-  Serial.println("=== FantasiA === level test");
+  Serial.println("=== Pony ENV === step 2: trigger in + EOC");
 }
-
 
 void loop() {
   readControls();
 
-  float lvlNorm = (levelCV - LVL_ADC_MIN) / float(LVL_ADC_MAX - LVL_ADC_MIN);
-  levelVolts = constrain(lvlNorm, 0.0f, 1.0f) * ENV_MAX_VOLTS;
-  setDcVolts(levelVolts);
+  if (trigButtonPushed()) env.trigger();
 
-  ledsColors[0].green = trigButtonPressed() ? 255 : 0;
-  updateNeopixel();
+  // LED: green while the envelope runs, blue flash on EOC
+  ledsColors[0].red = 0;
+  ledsColors[0].green = env.stage() != PonyEnv::IDLE ? 255 : 0;
+  ledsColors[0].blue = env.eocActive() ? 255 : 0;
+  static uint32_t lastLed = 0;
+  if (millis() - lastLed >= 16) { lastLed = millis(); updateNeopixel(); }
 
   static uint32_t lastPrint = 0;
   if (millis() - lastPrint >= 200)
   {
     lastPrint = millis();
-    float dac = jackVoltsToDac(levelVolts);
-    Serial.printf("ATK %4d  DEC %4d  LVL %4d -> DAC %+.4f FS (PCM5100 %+.3f Vpk) -> ENV %.2f V\n",
-                  attackCV, decayCV, levelCV, dac, dac * 2.97f, levelVolts);
+    static const char *stageNames[] = {"IDLE", "ATTACK", "DECAY"};
+    Serial.printf("%-6s env %.3f (%.2f V)  trigs %lu  TRIG %s  ATK %4d  DEC %4d  LVL %4d\n",
+                  stageNames[env.stage()], env.level(), env.level() * ENV_MAX_VOLTS,
+                  (unsigned long)trigCount, trigInHigh() ? "HI" : "lo",
+                  attackCV, decayCV, levelCV);
   }
-  delay(10);
 }

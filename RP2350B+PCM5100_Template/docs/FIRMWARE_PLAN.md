@@ -32,7 +32,7 @@ Defaults in use until decided otherwise:
 | D3 | Retrigger while running | Restart attack from the current level (no click) |
 | D4 | Ping meaning | Each trigger toggles between rising (attack time) and falling (decay time) |
 | D5 | Time ranges, A/D pot min → max | Fast 1 ms–250 ms · Medium 5 ms–2 s · Slow 20 ms–10 s · Extended 100 ms–60 s |
-| D6 | EOC | 10 ms pulse at end of decay (one-shot) / end of each cycle (loop) |
+| D6 | EOC | 4 ms pulse (hardware alarm) at end of decay (one-shot) / end of each cycle (loop) |
 | D7 | TAP function | Manual trigger only for now |
 
 D1 and D4 are needed before steps 5–6.
@@ -55,12 +55,12 @@ Each step is its own build/flash, committed once its test passes.
 ### 2. Trigger input + EOC
 - GPIO12 `attachInterrupt` on FALLING (inverted input) sets a flag read by the
   engine at the next block. Button uses the same path.
-- EOC on GPIO18 (inverted), 10 ms pulse timed by the engine.
+- EOC on GPIO18 (inverted), 4 ms pulse: set at end of decay by the engine, cleared by a hardware alarm.
 
 **Test**
 - [ ] 1 Hz clock into TRIGG, scope CH1 = trigger, CH2 = ENV: envelope starts ≤ ~3 ms after the edge (one audio block)
 - [ ] No missed triggers up to 100 Hz (count over 10 s)
-- [ ] EOC goes high for 10 ms at end of decay, ~+11 V
+- [ ] EOC goes high for 4 ms at end of decay, ~+11 V (needs a clock slower than ~1.5 Hz with the default 100/500 ms times)
 
 ### 3. Time controls + ranges
 - ATTACK / DECAY → time on an exponential curve, so the pots feel even across
