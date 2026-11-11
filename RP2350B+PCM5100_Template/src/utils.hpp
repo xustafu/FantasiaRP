@@ -21,9 +21,10 @@
 #define DAC_CH_ENV_ATTE  1  // right
 
 // Output scaling (both channels): PCM5100 full scale = 2.1 Vrms = 2.97 Vpk,
-// then inverting stage gain = -39k / (2.2k + 10k) = -3.2  ->  -9.49 V per 1.0 FS.
-// Calculated -9.49; measured on B3 unit: -0.1575 FS -> 1.55V at ENV_C -> -9.84.
-#define OUT_VOLTS_PER_FS (-9.84f)
+// then inverting stage gain = -R43 / (2.2k + 10k).
+// R43 39k: calc -9.49, measured -9.84 (-0.1575 FS -> 1.55V at ENV_C).
+// R43 43k (rework): -9.84 * 43/39 = -10.85 (scaled from measurement, re-check on bench)
+#define OUT_VOLTS_PER_FS (-10.85f)
 
 // Convert a desired voltage at the output jack to a DAC sample value (-1..1)
 inline float jackVoltsToDac(float volts) { return volts / OUT_VOLTS_PER_FS; }

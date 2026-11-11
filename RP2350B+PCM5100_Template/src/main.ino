@@ -41,15 +41,14 @@ AudioConnection          patchCord2(dcEnvAtte, 0, output, DAC_CH_ENV_ATTE);
 
 // end of generated code
 
-// VCA test: ENV (and ENV_ATTE) output a fixed DC level set by the LEVEL pot.
-// Pot at max -> VCA fully open. Measured with meter on ENV_C: VCA reaches max
-// amplitude at 1.55V. LVL 0..4095 is scaled to 0..1.55V.
-// NOTE: the LEVEL pot stage (IC4A, gain -1, 3.3V rail) saturates the ADC at ~1/3
-// of the pot travel, so levelCV reaches 4095 well before the pot end.
-#define VCA_TEST_MAX_VOLTS 1.55f
-// Measured LVL ADC span (IC4A can't reach the rails, and saturates ~half pot turn)
+// Level test: ENV (and ENV_ATTE) output a fixed DC level set by the LEVEL pot.
+// After the B3 rework (HW_MODS_B3.md) the envelope runs 0..10V at the jack and
+// the VCA CV scaling (R5 47k / R8 7.5k) is done in hardware.
+#define ENV_MAX_VOLTS 10.0f
+// LVL ADC span after R1/R28 -> 110k: pot 0..-10V -> 0..3.0V -> ~0..3723.
+// Estimated: re-measure min/max on the serial monitor and update.
 #define LVL_ADC_MIN 43
-#define LVL_ADC_MAX 4027
+#define LVL_ADC_MAX 3700
 
 float levelVolts = 0.0f;
 
@@ -67,7 +66,7 @@ void setup() {
   setDcVolts(0.0f);
   //Start Codec Output
   output.begin(PIN_I2S_BCK, PIN_I2S_LRCK, PIN_I2S_DATA);
-  Serial.println("=== FantasiA === VCA test");
+  Serial.println("=== FantasiA === level test");
 }
 
 
@@ -75,7 +74,7 @@ void loop() {
   readControls();
 
   float lvlNorm = (levelCV - LVL_ADC_MIN) / float(LVL_ADC_MAX - LVL_ADC_MIN);
-  levelVolts = constrain(lvlNorm, 0.0f, 1.0f) * VCA_TEST_MAX_VOLTS;
+  levelVolts = constrain(lvlNorm, 0.0f, 1.0f) * ENV_MAX_VOLTS;
   setDcVolts(levelVolts);
 
   ledsColors[0].green = trigButtonPressed() ? 255 : 0;
@@ -86,8 +85,8 @@ void loop() {
   {
     lastPrint = millis();
     float dac = jackVoltsToDac(levelVolts);
-    Serial.printf("LVL %4d -> DAC %+.4f FS (PCM5100 %+.3f Vpk) -> ENV %.2f V\n",
-                  levelCV, dac, dac * 2.97f, levelVolts);
+    Serial.printf("ATK %4d  DEC %4d  LVL %4d -> DAC %+.4f FS (PCM5100 %+.3f Vpk) -> ENV %.2f V\n",
+                  attackCV, decayCV, levelCV, dac, dac * 2.97f, levelVolts);
   }
   delay(10);
 }
