@@ -22,8 +22,8 @@
 
 // Output scaling (both channels): PCM5100 full scale = 2.1 Vrms = 2.97 Vpk,
 // then inverting stage gain = -39k / (2.2k + 10k) = -3.2  ->  -9.49 V per 1.0 FS.
-// Trim this constant after measuring a real unit.
-#define OUT_VOLTS_PER_FS (-9.49f)
+// Calculated -9.49; measured on B3 unit: -0.1575 FS -> 1.55V at ENV_C -> -9.84.
+#define OUT_VOLTS_PER_FS (-9.84f)
 
 // Convert a desired voltage at the output jack to a DAC sample value (-1..1)
 inline float jackVoltsToDac(float volts) { return volts / OUT_VOLTS_PER_FS; }
