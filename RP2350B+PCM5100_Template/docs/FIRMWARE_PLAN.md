@@ -8,6 +8,22 @@ Stack: Arduino (earlephilhower core) + pico-audio. The envelope is a custom
 `AudioStream` computed per sample at 44.1 kHz. No DaisySP port; the curve idea
 from its `AdEnv::SetCurve` is reused.
 
+## Status — 2026-11-11
+
+**Current step: 3 (time controls + ranges)**, implemented and flashed, bench tests pending.
+
+| Step | State | Notes |
+|---|---|---|
+| 1. Engine skeleton | ✅ done | Button fires a full AD cycle. **Open:** ENV looked inverted / only ~2 V on the scope. Suspected scope AC coupling (the DC level test reached 10 V). Re-check on the meter or with DC coupling. |
+| 2. Trigger + EOC | ✅ done | TRIGG interrupt works. EOC 4 ms (hardware alarm), confirmed on the bench. EOC only fires when a decay completes: a clock faster than A+D gives no EOC. |
+| 3. Times + ranges | 🔶 bench tests pending | Exponential pot → time, RANGE D5, 1 kHz control rate with ~20 ms smoothing. Slider direction flipped (top of travel = longest time). `AD_ADC_MIN/MAX` still estimated. |
+| 4. Shapes | ⬜ | |
+| 5. Modes | ⬜ | needs D4 |
+| 6. Level / outputs / VCA | ⬜ | **LEVEL not implemented yet:** pot is read but unused, both outputs peak at 10 V. Needs D1. |
+| 7. CV inputs | ⬜ | see the ATTACK / DECAY CV note in step 7 |
+| 8. NeoPixel | ⬜ | (temporary: green while running, blue on EOC) |
+| 9. Integration / soak | ⬜ | |
+
 ## Hardware reference doc vs B3 board
 
 Where the reference doc and the board disagree, the firmware follows the board:
@@ -28,7 +44,7 @@ Defaults in use until decided otherwise:
 | # | Question | Default |
 |---|---|---|
 | D1 | Which output LVL scales, which one drives the VCA (VCA is hardwired to L / ENV jack) | L (ENV + VCA) = envelope × LVL; R (ENV_ATTE) = full envelope. One line in firmware to swap. |
-| D2 | CV polarity: positive CV currently lowers the reading | Fix in hardware with IC4B as a −1 inverter before R28 (and the A/D equivalents). Not fixable in firmware: with the pot at minimum, CV can't push the reading lower. |
+| D2 | CV polarity: positive CV currently lowers the reading | **LVL:** fix in hardware with IC4B as a −1 inverter before R28. Not fixable in firmware: with the pot at minimum, CV can't push the reading lower. **ATTACK / DECAY:** since step 3 the firmware inverts the slider reading, so positive CV *should* lengthen the time with no hardware change. To be checked in step 7. |
 | D3 | Retrigger while running | Restart attack from the current level (no click) |
 | D4 | Ping meaning | Each trigger toggles between rising (attack time) and falling (decay time) |
 | D5 | Time ranges, A/D pot min → max | Fast 1 ms–250 ms · Medium 5 ms–2 s · Slow 20 ms–10 s · Extended 100 ms–60 s |
@@ -48,7 +64,7 @@ Each step is its own build/flash, committed once its test passes.
 - Remove `delay(10)` from `loop()`; the loop only reads controls and sets parameters.
 
 **Test**
-- [ ] Button press → scope shows 0 → 10 V → 0 at ENV, ~100 ms rise / ~500 ms fall
+- [x] Button press → full AD cycle at ENV, ~100 ms rise / ~500 ms fall (level still open, see Status)
 - [ ] Peak 10.0 V ±0.1 V on the meter (checks `OUT_VOLTS_PER_FS`)
 - [ ] Output sits at 0 V when idle and at boot
 
@@ -60,7 +76,7 @@ Each step is its own build/flash, committed once its test passes.
 **Test**
 - [ ] 1 Hz clock into TRIGG, scope CH1 = trigger, CH2 = ENV: envelope starts ≤ ~3 ms after the edge (one audio block)
 - [ ] No missed triggers up to 100 Hz (count over 10 s)
-- [ ] EOC goes high for 4 ms at end of decay, ~+11 V (needs a clock slower than ~1.5 Hz with the default 100/500 ms times)
+- [x] EOC goes high for 4 ms at end of decay, ~+11 V (needs a clock slower than ~1.5 Hz with the default 100/500 ms times)
 
 ### 3. Time controls + ranges
 - ATTACK / DECAY → time on an exponential curve, so the pots feel even across
@@ -110,6 +126,17 @@ Each step is its own build/flash, committed once its test passes.
 ### 7. CV inputs
 - Apply D2 in hardware, measure the ADC response to CV, re-calibrate each
   channel's min/max.
+
+> **Note: check the ATTACK / DECAY CV direction and range.** Step 3 inverts
+> the slider reading in firmware (top of travel = longest time). Through the
+> inverting summer, positive CV lowers the ADC reading, so it should now
+> *lengthen* the time. Not yet measured. Check:
+> - [ ] Slider at the short end + positive CV: time gets longer
+> - [ ] Slider at the long end + positive CV: reading clamps at the ADC floor (CV can't go past the slider's long end); decide if that's acceptable
+> - [ ] Negative CV (not officially supported): shortens the time, and the ADC doesn't go out of range
+> - [ ] How many volts of CV cover the full time range (summer gain R29/R_cv)
+> - [ ] Re-measure `AD_ADC_MIN` / `AD_ADC_MAX` (the DECAY slider read 35 at its end, below the assumed 43)
+> - [ ] Decide whether ATTACK / DECAY still need the IC4B-style inverter, or whether the firmware inversion is enough
 
 **Test**
 - [ ] Bench supply 0 / 2.5 / 5 / 10 V into each CV jack with the pot at minimum: serial readings change as expected, times/level follow
